@@ -206,6 +206,7 @@ public:
   };
 
   static DiscardResponseHandler gDiscardResponseHandler;
+  static const int XrdMqMaxMessageLen = 2 * 1000 * 1000;
 
 private:
   static XrdSysMutex Mutex;
