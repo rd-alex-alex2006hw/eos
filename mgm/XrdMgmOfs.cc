@@ -36,6 +36,7 @@
 #include "namespace/Constants.hh"
 #include "namespace/interface/ContainerIterators.hh"
 #include "authz/XrdCapability.hh"
+#include "grpc/GrpcServer.hh"
 #include "mgm/Stat.hh"
 #include "mgm/Access.hh"
 #include "mgm/FileSystem.hh"
@@ -176,6 +177,7 @@ XrdMgmOfs::XrdMgmOfs(XrdSysError* ep):
   LRUPtr(new eos::mgm::LRU()), LRUd(*LRUPtr),
   WFEPtr(new eos::mgm::WFE()), WFEd(*WFEPtr),
   UTF8(false), mFstGwHost(""), mFstGwPort(0), mQdbCluster(""), mHttpdPort(8000),
+  mGRPCPort(50051),
   mFusexPort(1100),
   mSubmitterTid(0),
   mJeMallocHandler(new eos::common::JeMallocHandler())
@@ -191,10 +193,15 @@ XrdMgmOfs::XrdMgmOfs(XrdSysError* ep):
     mFusexPort = strtol(getenv("EOS_MGM_FUSEX_PORT"), 0, 10);
   }
 
+  if (getenv("EOS_MGM_GRPC_PORT")) {
+    mGRPCPort = strtol(getenv("EOS_MGM_GRPC_PORT"), 0, 10);
+  }
+
   eos::common::LogId::SetSingleShotLogId();
   mZmqContext = new zmq::context_t(1);
   IoStats.reset(new eos::mgm::Iostat());
   Httpd.reset(new eos::mgm::HttpServer(mHttpdPort));
+  GRPCd.reset(new eos::mgm::GrpcServer(mGRPCPort));
   EgroupRefresh.reset(new eos::mgm::Egroup());
   Recycler.reset(new eos::mgm::Recycle());
 }

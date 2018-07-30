@@ -148,6 +148,7 @@ class MgmOfsVstMessaging;
 class VstMessaging;
 class IConfigEngine;
 class HttpServer;
+class GrpcServer;
 class Egroup;
 class GeoTreeEngine;
 class ZMQ;
@@ -1552,6 +1553,8 @@ public:
   bool mIsCentralDrain; ///< Flag to mark central draining
   std::unique_ptr<HttpServer> Httpd; ///<  Http daemon if available
 
+  std::unique_ptr<GrpcServer> GRPCd; ///< Grpc server
+
   //! LRU object running the LRU policy engine
   std::unique_ptr<LRU> LRUPtr;
   LRU& LRUd;
@@ -1573,6 +1576,7 @@ public:
   std::string mQdbPassword; ///< Quarkdb cluster password
   eos::QdbContactDetails mQdbContactDetails; ///< QuarkDB contact details
   int mHttpdPort; ///< port of the http server, default 8000
+  int mGRPCPort; ///< port of the grpc server, default 50051
   int mFusexPort; ///< port of the FUSEX brocasz MQZ, default 1100
 
 private:

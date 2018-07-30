@@ -156,6 +156,7 @@ add_library(
   LRU.cc
   WFE.cc
   Workflow.cc
+  grpc/GrpcServer.cc   grpc/GrpcServer.hh
   http/HttpServer.cc
   http/HttpHandler.cc
   http/s3/S3Handler.cc
@@ -201,6 +202,12 @@ if (MICROHTTPD_FOUND)
   target_compile_definitions(
     XrdEosMgm PUBLIC -DEOS_MICRO_HTTPD=1)
 endif()
+
+if (GRPC_FOUND)
+  target_compile_definitions(
+    XrdEosMgm PUBLIC -DEOS_GRPC=1)
+endif()
+
 
 target_link_libraries(
   XrdEosMgm PUBLIC
