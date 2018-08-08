@@ -2001,12 +2001,18 @@ XrdMgmOfs::Configure(XrdSysError& Eroute)
   }
 
   // create the 'default' quota space which is needed if quota is disabled!
-  if (!Httpd->Start()) {
-    eos_warning("msg=\"cannot start httpd daemon\"");
+  if (Httpd) {
+    if (!Httpd->Start()) {
+      eos_warning("msg=\"cannot start httpd daemon\"");
+    }
   }
 
 #ifdef EOS_GRPC
-  GRPCd->Start();
+
+  if (GRPCd) {
+    GRPCd->Start();
+  }
+
 #endif
 
   // start the Egroup fetching
