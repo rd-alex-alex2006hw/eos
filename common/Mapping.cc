@@ -96,6 +96,7 @@ Mapping::Init()
 //------------------------------------------------------------------------------
 // Reset
 //------------------------------------------------------------------------------
+
 void
 Mapping::Reset()
 {
@@ -181,11 +182,6 @@ Mapping::IdMap(const XrdSecEntity* client, const char* env, const char* tident,
   vid.name = client->name;
   vid.tident = tident;
   vid.sudoer = false;
-
-  if (vid.prot == "sss") {
-    vid.key = (client->endorsements ? client->endorsements : "");
-  }
-
   // first map by alias
   XrdOucString useralias = client->prot;
   useralias += ":";
@@ -198,6 +194,14 @@ Mapping::IdMap(const XrdSecEntity* client, const char* env, const char* tident,
   groupalias += "gid";
   RWMutexReadLock lock(gMapMutex);
   vid.prot = client->prot;
+
+  if (vid.prot == "sss") {
+    vid.key = (client->endorsements ? client->endorsements : "");
+  }
+
+  if (vid.prot == "grpc") {
+    vid.key = (client->endorsements ? client->endorsements : "");
+  }
 
   // ---------------------------------------------------------------------------
   // kerberos mapping
@@ -663,6 +667,56 @@ Mapping::IdMap(const XrdSecEntity* client, const char* env, const char* tident,
 
     if (!HasGid(4, vid.gid_list)) {
       vid.gid_list.push_back(vid.gid);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // grpc key mapping
+  // ---------------------------------------------------------------------------
+  if ((vid.prot == "grpc") && vid.key.length()) {
+    std::string keyname = vid.key.c_str();
+    std::string maptident = "tident:\"grpc@";
+    std::string wildcardmaptident = "tident:\"grpc@*\":uid";
+    std::vector<std::string> vtident;
+    eos::common::StringConversion::Tokenize(client->tident, vtident, "@");
+
+    if (vtident.size() == 2) {
+      maptident += vtident[1];
+    }
+
+    maptident += "\":uid";
+    eos_static_info("%d %s %s %s", vtident.size(), client->tident,
+                    maptident.c_str(), wildcardmaptident.c_str());
+
+    if (gVirtualUidMap.count(maptident.c_str()) ||
+        gVirtualUidMap.count(wildcardmaptident.c_str())) {
+      // if this is an allowed gateway, map according to client name or authkey
+      std::string uidkey = "grpc:\"";
+      uidkey += keyname;
+      uidkey += "\":uid";
+      vid.uid = 99;
+      vid.uid_list.clear();
+      vid.uid_list.push_back(99);
+
+      if (gVirtualUidMap.count(uidkey.c_str())) {
+        vid.uid = gVirtualUidMap[uidkey.c_str()];
+        vid.uid_list.push_back(vid.uid);
+      }
+
+      std::string gidkey = "grpc:\"";
+      gidkey += keyname;
+      gidkey += "\":gid";
+      vid.gid = 99;
+      vid.gid_list.clear();
+      vid.gid_list.push_back(99);
+
+      if (gVirtualGidMap.count(gidkey.c_str())) {
+        vid.gid = gVirtualGidMap[gidkey.c_str()];
+        vid.gid_list.push_back(vid.gid);
+      }
+    } else {
+      // we are nobody if we are not an authorized host
+      Nobody(vid);
     }
   }
 
@@ -1140,7 +1194,7 @@ Mapping::getPhysicalIds(const char* name, VirtualIdentity& vid)
   }
 
   gid_vector* gv;
-  id_pair* id  = 0;
+  id_pair* id = 0;
   memset(&passwdinfo, 0, sizeof(passwdinfo));
   eos_static_debug("find in uid cache %s", name);
   XrdSysMutexHelper gLock(gPhysicalIdMutex);
@@ -1172,7 +1226,7 @@ Mapping::getPhysicalIds(const char* name, VirtualIdentity& vid)
 
         if (eos::common::SymKey::Base64Decode(b64name, out, outlen)) {
           if (outlen <= 8) {
-            memcpy((((char*)&bituser)) + 8 - outlen, out, outlen);
+            memcpy((((char*) &bituser)) + 8 - outlen, out, outlen);
             eos_static_debug("msg=\"decoded base-64 uid/gid/sid\" val=%llx val=%llx",
                              bituser, n_tohll(bituser));
           } else {
@@ -1192,7 +1246,7 @@ Mapping::getPhysicalIds(const char* name, VirtualIdentity& vid)
           }
 
           if (sname.beginswith("*")) {
-            id  = new id_pair((bituser >> 22) & 0xfffff, (bituser >> 6) & 0xffff);
+            id = new id_pair((bituser >> 22) & 0xfffff, (bituser >> 6) & 0xffff);
           } else {
             // only user id got forwarded, we retrieve the corresponding group
             uid_t ruid = (bituser >> 6) & 0xfffffffff;
@@ -1428,6 +1482,7 @@ Mapping::GidToGroupName(gid_t gid, int& errc)
  *
  * @return user id
  */
+
 /*----------------------------------------------------------------------------*/
 uid_t
 Mapping::UserNameToUid(const std::string& username, int& errc)
@@ -1596,6 +1651,7 @@ Mapping::ip_cache::GetIp(const char* hostname)
 // -----------------------------------------------------------------------------
 //! Convert a komma separated uid string to a vector uid list
 // -----------------------------------------------------------------------------
+
 void
 Mapping::KommaListToUidVector(const char* list, std::vector<uid_t>& vector_list)
 {
@@ -1622,8 +1678,7 @@ Mapping::KommaListToUidVector(const char* list, std::vector<uid_t>& vector_list)
       }) !=
       username.end()) {
         uid = eos::common::Mapping::UserNameToUid(username, errc);
-      }
-      else {
+      } else {
         try {
           uid = std::stoul(username);
         } catch (const std::exception& e) {
@@ -1643,6 +1698,7 @@ Mapping::KommaListToUidVector(const char* list, std::vector<uid_t>& vector_list)
 // -----------------------------------------------------------------------------
 //! Convert a komma separated gid string to a vector gid list
 // -----------------------------------------------------------------------------
+
 void
 Mapping::KommaListToGidVector(const char* list, std::vector<gid_t>& vector_list)
 {
@@ -1675,6 +1731,7 @@ Mapping::KommaListToGidVector(const char* list, std::vector<gid_t>& vector_list)
 // -----------------------------------------------------------------------------
 //! Check if a vector contains uid
 // -----------------------------------------------------------------------------
+
 bool Mapping::HasUid(uid_t uid, uid_vector vector)
 {
   uid_vector::const_iterator it;
@@ -1691,6 +1748,7 @@ bool Mapping::HasUid(uid_t uid, uid_vector vector)
 // -----------------------------------------------------------------------------
 //! Check if vector contains gid
 // -----------------------------------------------------------------------------
+
 bool Mapping::HasGid(gid_t gid, gid_vector vector)
 {
   uid_vector::const_iterator it;
@@ -1707,6 +1765,7 @@ bool Mapping::HasGid(gid_t gid, gid_vector vector)
 // -----------------------------------------------------------------------------
 //! Compare a uid with the string representation
 // -----------------------------------------------------------------------------
+
 bool Mapping::IsUid(XrdOucString idstring, uid_t& id)
 {
   id = strtoul(idstring.c_str(), 0, 10);
@@ -1724,6 +1783,7 @@ bool Mapping::IsUid(XrdOucString idstring, uid_t& id)
 // -----------------------------------------------------------------------------
 //! Compare a gid with the string representation
 // -----------------------------------------------------------------------------
+
 bool Mapping::IsGid(XrdOucString idstring, gid_t& id)
 {
   id = strtoul(idstring.c_str(), 0, 10);
@@ -1763,6 +1823,7 @@ const char* Mapping::ReduceTident(XrdOucString& tident,
 // -----------------------------------------------------------------------------
 //! Convert a uid into a string
 // -----------------------------------------------------------------------------
+
 std::string Mapping::UidAsString(uid_t uid)
 {
   std::string uidstring = "";
@@ -1775,6 +1836,7 @@ std::string Mapping::UidAsString(uid_t uid)
 // -----------------------------------------------------------------------------
 //! Convert a gid into a string
 // -----------------------------------------------------------------------------
+
 std::string Mapping::GidAsString(gid_t gid)
 {
   std::string gidstring = "";
@@ -1787,6 +1849,7 @@ std::string Mapping::GidAsString(gid_t gid)
 // -----------------------------------------------------------------------------
 //! Copy function for virtual identities
 // -----------------------------------------------------------------------------
+
 void Mapping::Copy(Mapping::VirtualIdentity& vidin,
                    Mapping::VirtualIdentity& vidout)
 {
@@ -1821,6 +1884,7 @@ void Mapping::Copy(Mapping::VirtualIdentity& vidin,
 //------------------------------------------------------------------------------
 //! Function converting vid frin a string representation
 //------------------------------------------------------------------------------
+
 bool Mapping::VidFromString(Mapping::VirtualIdentity& vid,
                             const char* vidstring)
 {
@@ -1848,6 +1912,7 @@ bool Mapping::VidFromString(Mapping::VirtualIdentity& vid,
 //----------------------------------------------------------------------------
 //! Function converting vid to a string representation
 //----------------------------------------------------------------------------
+
 std::string Mapping::VidToString(VirtualIdentity& vid)
 {
   char vids[4096];
@@ -1865,6 +1930,7 @@ std::string Mapping::VidToString(VirtualIdentity& vid)
 //------------------------------------------------------------------------------
 //! Function checking if we come from a localhost connection
 //------------------------------------------------------------------------------
+
 bool Mapping::IsLocalhost(VirtualIdentity& vid)
 {
   if ((vid.host == "localhost") ||
@@ -1880,6 +1946,7 @@ bool Mapping::IsLocalhost(VirtualIdentity& vid)
 // -----------------------------------------------------------------------------
 //! Check for a role in the user id list
 // -----------------------------------------------------------------------------
+
 bool Mapping::HasUid(uid_t uid, VirtualIdentity& vid)
 {
   for (size_t i = 0; i < vid.uid_list.size(); i++)
@@ -1893,6 +1960,7 @@ bool Mapping::HasUid(uid_t uid, VirtualIdentity& vid)
 // -----------------------------------------------------------------------------
 //! Check for a role in the group id list
 // -----------------------------------------------------------------------------
+
 bool Mapping::HasGid(gid_t gid, VirtualIdentity& vid)
 {
   for (size_t i = 0; i < vid.gid_list.size(); i++)
@@ -1906,6 +1974,7 @@ bool Mapping::HasGid(gid_t gid, VirtualIdentity& vid)
 //------------------------------------------------------------------------------
 //! Function creating the Nobody identity
 //------------------------------------------------------------------------------
+
 void Mapping::Nobody(VirtualIdentity& vid)
 {
   vid.uid = vid.gid = 99;
@@ -1921,6 +1990,7 @@ void Mapping::Nobody(VirtualIdentity& vid)
 //----------------------------------------------------------------------------
 //! Function creating the root identity
 //----------------------------------------------------------------------------
+
 void Mapping::Root(VirtualIdentity& vid)
 {
   vid.uid = vid.gid = 0;
