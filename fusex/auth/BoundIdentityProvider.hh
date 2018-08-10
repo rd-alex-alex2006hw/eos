@@ -89,6 +89,9 @@ private:
   CredentialState fillX509FromEnv(const Environment& env, CredInfo& creds,
                                   uid_t uid);
 
+  CredentialState fillSssFromEnv(const Environment& env, CredInfo& creds,
+                                 uid_t uid);
+
   uint64_t getUnixConnectionCounter(uid_t uid, gid_t gid, bool reconnect);
 
   std::mutex unixConnectionCounterMtx;
