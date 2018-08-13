@@ -185,7 +185,7 @@ public:
       paramsMap["xrd.wantprot"] = "gsi,unix";
       paramsMap["xrd.gsiusrpxy"] = contents;
     } else if (type == CredInfo::sss) {
-      paramsMap["xrd.wantprot"] = "sss,unix";
+      paramsMap["xrd.wantprot"] = "sss";
     } else {
       THROW("should never reach here");
     }
