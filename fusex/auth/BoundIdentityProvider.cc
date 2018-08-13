@@ -61,28 +61,10 @@ BoundIdentityProvider::fillX509FromEnv(const Environment& env, CredInfo& creds,
 }
 
 CredentialState
-BoundIdentityProvider::fillSssFromEnv(const Environment& env, CredInfo& creds,
-                                      uid_t uid)
-{
-  std::string path = CredentialFinder::locateSss(env);
-  creds.type = CredInfo::sss;
-  return tryCredentialFile(path, creds, uid);
-}
-
-CredentialState
 BoundIdentityProvider::fillCredsFromEnv(const Environment& env,
                                         const CredentialConfig& credConfig,
                                         CredInfo& creds, uid_t uid)
 {
-  if (credConfig.use_user_sss) {
-    CredentialState state = fillSssFromEnv(env, creds, uid);
-
-    if (state != CredentialState::kCannotStat) {
-      return state;
-    }
-  }
-
-  // Try krb5 second
   if (credConfig.tryKrb5First) {
     if (credConfig.use_user_krb5cc) {
       CredentialState state = fillKrb5FromEnv(env, creds, uid);
@@ -94,14 +76,6 @@ BoundIdentityProvider::fillCredsFromEnv(const Environment& env,
 
     if (credConfig.use_user_gsiproxy) {
       CredentialState state = fillX509FromEnv(env, creds, uid);
-
-      if (state != CredentialState::kCannotStat) {
-        return state;
-      }
-    }
-
-    if (credConfig.use_user_sss) {
-      CredentialState state = fillSssFromEnv(env, creds, uid);
 
       if (state != CredentialState::kCannotStat) {
         return state;
@@ -193,8 +167,6 @@ CredentialState BoundIdentityProvider::retrieve(const Environment& processEnv,
     trustedCreds->setKrk5(credinfo.fname, uid, gid);
   } else if (credinfo.type == CredInfo::x509) {
     trustedCreds->setx509(credinfo.fname, uid, gid, credinfo.mtime);
-  } else if (credinfo.type == CredInfo::sss) {
-    trustedCreds->setSss(credinfo.fname, uid, gid);
   }
 
   BoundIdentity* binding = new BoundIdentity(login, trustedCreds);
@@ -225,8 +197,7 @@ BoundIdentityProvider::retrieve(pid_t pid, uid_t uid, gid_t gid, bool reconnect,
                                 std::shared_ptr<const BoundIdentity>& result)
 {
   // If not using krb5 or gsi, fallback to unix authentication
-  if (!credConfig.use_user_krb5cc && !credConfig.use_user_gsiproxy &&
-      !credConfig.use_user_sss) {
+  if (!credConfig.use_user_krb5cc && !credConfig.use_user_gsiproxy) {
     return unixAuthentication(uid, gid, pid, reconnect, result);
   }
 
