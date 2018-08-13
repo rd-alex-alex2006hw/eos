@@ -75,7 +75,7 @@ BoundIdentityProvider::fillCredsFromEnv(const Environment& env,
                                         CredInfo& creds, uid_t uid)
 {
   if (credConfig.use_user_sss) {
-    CredentialState state = fillSssFromEnv(env, creds, geteuid());
+    CredentialState state = fillSssFromEnv(env, creds, uid);
 
     if (state != CredentialState::kCannotStat) {
       return state;
@@ -101,7 +101,7 @@ BoundIdentityProvider::fillCredsFromEnv(const Environment& env,
     }
 
     if (credConfig.use_user_sss) {
-      CredentialState state = fillSssFromEnv(env, creds, geteuid());
+      CredentialState state = fillSssFromEnv(env, creds, uid);
 
       if (state != CredentialState::kCannotStat) {
         return state;
