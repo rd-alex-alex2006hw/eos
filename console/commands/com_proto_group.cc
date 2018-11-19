@@ -61,19 +61,6 @@ public:
 };
 
 
-template<typename T>
-bool is_in(const T &x, const std::vector<T> &v) {
-  return std::find(v.begin(), v.end(), x) != v.end();
-}
-
-void is_in_usage() {
-  //usage:
-  std::vector<std::string> strings{"ls", "rm", "set"}; // same as strings.push_back("ls"); ...
-  if (is_in(s, strings)) {
-    // do something
-  }
-}
-
 bool GroupHelper::ParseCommand(const char *arg) {
 
   eos::console::RmProto *group = mReq.mutable_group();
