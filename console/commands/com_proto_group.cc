@@ -82,17 +82,17 @@ bool GroupHelper::ParseCommand(const char *arg) {
 
   /* one of { ls, rm, set } */
   if (subcommand == "ls") {
+    
+    eos::console::GroupProto_LsProto* ls = group->mutable_ls();
 
     if (!(option = tokenizer.GetToken())) {
-      return true; // just "group ls" // #TOCK something to do? 
+      return true; // just "group ls" // #TOCK anything to do? 
     } else {
-
-      eos::console::GroupProto_LsProto* ls = group->mutable_ls();
 
       do {
 
         if (option == "-s") {
-          mIsSilent = true; //ls->set_s(true);
+          mIsSilent = true; //ls->set_silent(true);
 
         } else if (option == "-g") {
 

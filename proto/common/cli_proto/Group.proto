@@ -13,7 +13,7 @@ message GroupProto {
       IOGROUP               = 3; // [--io]
       IOFS                  = 4; // [--IO]
     }
-    OutFormat outformat   = 3 // 
+    OutFormat outformat   = 3; // 
     string selection      = 4; // [<groups>]
     // bool silent = 5;
   }
