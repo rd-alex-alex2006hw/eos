@@ -1,0 +1,29 @@
+syntax="proto3";
+package eos.console;
+
+message GroupProto {
+
+  message LsProto {
+    uint64 OutDepth 	= 1;
+    bool OutHost 		= 2;
+    enum OutFormat {
+      EPS 	= 0;
+      m 	= 1;
+      l 	= 2;
+      io 	= 3;
+      IO 	= 4;
+    }
+    string Selection 	= 4;
+    bool s 				= 5;
+  }
+
+  message RmProto {
+    string GroupName = 1;
+  }
+
+  message SetProto {
+    string GroupName = 1;
+    bool On = 2;
+  }
+
+}
