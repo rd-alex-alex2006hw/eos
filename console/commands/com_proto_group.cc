@@ -21,7 +21,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include <algorithm>
 
 #include "common/StringTokenizer.hh"
 #include "common/Path.hh"
@@ -63,15 +62,17 @@ public:
 
 bool GroupHelper::ParseCommand(const char *arg) {
 
-  eos::console::RmProto *group = mReq.mutable_group();
+  eos::console::GroupProto* group = mReq.mutable_group();
 
-  std::string subcommand;
-  std::string option;
   //
   XrdOucEnv *result = 0; //
   bool ok = false; //
   bool sel = false; //
   //
+
+  std::string subcommand;
+  std::string option;
+
   eos::common::StringTokenizer tokenizer(arg);
   tokenizer.GetLine();
 
@@ -86,7 +87,7 @@ bool GroupHelper::ParseCommand(const char *arg) {
       return true; // just "group ls" // #TOCK something to do? 
     } else {
 
-      eos::console::GroupProto_LsProto *ls = group->mutable_ls();
+      eos::console::GroupProto_LsProto* ls = group->mutable_ls();
 
       do {
 
@@ -112,11 +113,11 @@ bool GroupHelper::ParseCommand(const char *arg) {
 
         } else if (option == "-m" || option == "-l" || option == "--io" || option == "--IO") {
           option.erase(std::remove(option.begin(), option.end(), '-'), option.end());
-          ls->set_outformat(option);
+          ls->set_outformat(option); 
 
         } else if (!option.beginswith("-")) {
           ls->set_selection(option);
-          //TOCK
+          //#TOCK
           // if (!sel) {
           //   ok = true;
           // }
@@ -133,8 +134,8 @@ bool GroupHelper::ParseCommand(const char *arg) {
     if (!(option = tokenizer.GetToken())) {
       return false;
     } else {
-      eos::console::GroupProto_RmProto *rm = group->mutable_rm();
-      rm->set_groupname(option);
+      eos::console::GroupProto_RmProto* rm = group->mutable_rm();
+      rm->set_group(option);
     }
     return true;
 
@@ -143,15 +144,15 @@ bool GroupHelper::ParseCommand(const char *arg) {
     if (!(option = tokenizer.GetToken())) {
       return false;
     } else {
-      eos::console::GroupProto_SetProto *set = group->mutable_rm();
-      set->set_groupname(option);
+      eos::console::GroupProto_SetProto* set = group->mutable_set();
+      set->set_group(option);
       if (!(option = tokenizer.GetToken())) {
         return false;
       } else {
         if (option == "on") {
-          set->set_on(true);
+          set->set_group_state(true);
         } else if (option == "off") {
-          set->set_on(false);
+          set->set_group_state(false);
         } else {
           return false;
         }
@@ -159,7 +160,7 @@ bool GroupHelper::ParseCommand(const char *arg) {
     }
     return true;
 
-  } else {
+  } else { // no proper subcommand
     return false;
   }
 
