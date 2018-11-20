@@ -4,8 +4,6 @@ package eos.console;
 message GroupProto {
 
   message LsProto {
-    uint64 outdepth       = 1; // [-g]
-    bool outhost          = 2; // [-b]
     enum OutFormat {
       NONE                  = 0; //
       MONITORING            = 1; // [-m]
@@ -13,6 +11,9 @@ message GroupProto {
       IOGROUP               = 3; // [--io]
       IOFS                  = 4; // [--IO]
     }
+
+    uint64 outdepth       = 1; // [-g]
+    bool outhost          = 2; // [-b]
     OutFormat outformat   = 3; // 
     string selection      = 4; // [<groups>]
     // bool silent = 5;
