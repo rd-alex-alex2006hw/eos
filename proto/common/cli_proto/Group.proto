@@ -28,4 +28,10 @@ message GroupProto {
     bool group_state = 2;
   }
 
+  oneof subcmd {
+    LsProto ls    = 1;
+    RmProto rm    = 2;
+    SetProto set  = 3;
+  }
+
 }

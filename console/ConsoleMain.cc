@@ -75,7 +75,8 @@ extern int com_fuse(char*);
 extern int com_fusex(char*);
 extern int com_geosched(char*);
 extern int com_group(char*);
-// com_pproto_group(char*)
+extern int com_protogroup(char*);
+// com_proto_group(char*)
 extern int com_health(char*);
 extern int com_help(char*);
 extern int com_info(char*);
