@@ -1781,6 +1781,17 @@ private:
              const XrdSecEntity* client);
 
   //----------------------------------------------------------------------------
+  //! Handle file importation into the namespace operation
+  //----------------------------------------------------------------------------
+  int Import(const char* path,
+             const char* ininfo,
+             XrdOucEnv& env,
+             XrdOucErrInfo& error,
+             eos::common::LogId& ThreadLogId,
+             eos::common::Mapping::VirtualIdentity& vid,
+             const XrdSecEntity* client);
+
+  //----------------------------------------------------------------------------
   //! Query to determine if current node is acting as master
   //----------------------------------------------------------------------------
   int IsMaster(const char* path,
