@@ -88,6 +88,28 @@ GroupCmd::LsSubcmd(const eos::console::GroupProto_LsProto& ls,
   std::string format;
   std::string mListFormat;
   std::string fqdn;
+
+  switch (ls.outformat()) {
+  case MONITORING:
+    mOutFormat = "m"
+                 break;
+
+  case LONG:
+    mOutFormat = "l"
+                 break;
+
+  case IOGROUP:
+    mOutFormat = "io"
+                 break;
+
+  case IOFS:
+    mOutFormat = "IO"
+                 break;
+
+  default :
+    //
+  }
+
   format = FsView::GetGroupFormat(std::string(mOutFormat.c_str()));
 
   if ((mOutFormat == "l")) {
@@ -99,11 +121,12 @@ GroupCmd::LsSubcmd(const eos::console::GroupProto_LsProto& ls,
     mOutFormat = "io";
   }
 
-  if (pOpaque->Get("mgm.outhost")) {
-    fqdn = pOpaque->Get("mgm.outhost");
+  // if -b || --brief
+  if (ls.outhost()) {
+    fqdn = ls.outhost()
   }
 
-  if (fqdn != "brief") {
+  if (!fqdn) {
     if (format.find("S") != std::string::npos) {
       format.replace(format.find("S"), 1, "s");
     }
@@ -114,9 +137,12 @@ GroupCmd::LsSubcmd(const eos::console::GroupProto_LsProto& ls,
   }
 
   eos::common::RWMutexReadLock lock(FsView::gFsView.ViewMutex);
-  FsView::gFsView.PrintGroups(output, format, mListFormat, mOutDepth,
-                              mSelection);
-  stdOut += output.c_str();
+  FsView::gFsView.PrintGroups(output, format, mListFormat, ls.outdepth(),
+                              ls.selection());
+  stdOut += output.c_str(); // #TOCK needed?
+  reply.set_std_out(stdOut);
+  reply.set_std_err(stdErr);
+  reply.set_retc(retc);
   return SFS_OK; //TOCK is this needed?
 }
 
@@ -128,19 +154,18 @@ GroupCmd::RmSubcmd(const eos::console::GroupProto_RmProto& rm,
                    eos::console::ReplyProto& reply)
 {
   if (pVid->uid == 0) {
-    std::string groupname =
-      (std::to_string(rm.group().length()) ? std::to_string(rm.group()) :
-       "");   // #TOCK is this variable needed or is rm.group() enough?
+    std::string groupname = (std::to_string(rm.group().length()) ? std::to_string(
+                               rm.group()) : "");   // #TOCK is this variable needed or is rm.group() enough?
 
     if ((!groupname.length())) {
-      reply.set_std_err("error: illegal parameters");
-      reply.set_retc(EINVAL);
+      stdErr = "error: illegal parameters";
+      retc = EINVAL;
     } else {
       eos::common::RWMutexWriteLock lock(FsView::gFsView.ViewMutex);
 
       if (!FsView::gFsView.mGroupView.count(groupname)) {
-        reply.set_std_err("error: no such group '" + groupname.c_str() + "'");
-        reply.set_retc(ENOENT);
+        stdErr = "error: no such group '" + groupname.c_str() + "'";
+        retc = ENOENT;
       } else {
         for (auto it = FsView::gFsView.mGroupView[groupname]->begin();
              it != FsView::gFsView.mGroupView[groupname]->end(); it++) {
@@ -150,9 +175,11 @@ GroupCmd::RmSubcmd(const eos::console::GroupProto_RmProto& rm,
             if (fs) {
               // check that all filesystems are empty
               if ((fs->GetConfigStatus(false) != eos::common::FileSystem::kEmpty)) {
-                reply.set_std_err("error: unable to remove group '" + groupname.c_str() +
-                                  "' - filesystems are not all in empty state - try list the group and drain them or set: fs config <fsid> configstatus=empty\n");
-                reply.set_retc(EBUSY);
+                stdErr = "error: unable to remove group '" + groupname.c_str() +
+                         "' - filesystems are not all in empty state - try list the group and drain them or set: fs config <fsid> configstatus=empty\n";
+                retc = EBUSY;
+                reply.set_std_err(stdErr);
+                reply.set_retc(retc);
                 return SFS_OK;
               }
             }
@@ -165,26 +192,26 @@ GroupCmd::RmSubcmd(const eos::console::GroupProto_RmProto& rm,
 
         if (!eos::common::GlobalConfig::gConfig.SOM()->DeleteSharedHash(
               groupconfigname.c_str())) {
-          reply.set_std_err("error: unable to remove config of group '" +
-                            groupname.c_str() + "'");
-          reply.set_retc(EIO);
+          stdErr = "error: unable to remove config of group '" + groupname.c_str() + "'";
+          retc = EIO;
         } else {
           if (FsView::gFsView.UnRegisterGroup(groupname.c_str())) {
-            reply.set_std_out("success: removed group '" + groupname.c_str() + "'");
+            //reply.set_std_out("success: removed group '" + groupname.c_str() + "'"); // #TOCK
+            stdOut = "success: removed group '" + groupname.c_str() + "'";
           } else {
-            reply.set_std_err("error: unable to unregister group '" + groupname.c_str() +
-                              "'");
+            stdErr = "error: unable to unregister group '" + groupname.c_str() + "'";
           }
         }
       }
     }
   } else {
-    reply.set_retc(EPERM);
-    reply.set_std_err("error: you have to take role 'root' to execute this command");
+    stdErr = "error: you have to take role 'root' to execute this command";
+    retc = EPERM;
   }
 
-  //reply.set_std_err(stdErr); #TOCK
-  //reply.set_retc(retc); #TOCK
+  reply.set_std_out(stdOut);
+  reply.set_std_err(stdErr);
+  reply.set_retc(retc);
   return SFS_OK; //TOCK is this needed?
 }
 
@@ -196,9 +223,9 @@ GroupCmd::SetSubcmd(const eos::console::GroupProto_SetProto& set,
                     eos::console::ReplyProto& reply)
 {
   if (pVid->uid == 0) {
-    std::string groupname =
-      (std::to_string(set.group().length()) ? std::to_string(set.group()) :
-       "");   // #TOCK is this variable needed or is using rm.group() enough?
+    std::string groupname = (std::to_string(set.group().length()) ? std::to_string(
+                               set.group()) :
+                             "");   // #TOCK is this variable needed or is using rm.group() enough?
     std::string status = std::to_string(
                            set.group_state()); // #TOCK how are proto bool type handled?
     std::string key = "status";
@@ -210,18 +237,14 @@ GroupCmd::SetSubcmd(const eos::console::GroupProto_SetProto& set,
       eos::common::RWMutexWriteLock lock(FsView::gFsView.ViewMutex);
 
       if (!FsView::gFsView.mGroupView.count(groupname)) {
-        stdOut = "info: creating group '";
-        stdOut += groupname.c_str();
-        stdOut += "'";
+        stdOut = "info: creating group '" + groupname.c_str() + "'";
 
         if (!FsView::gFsView.RegisterGroup(groupname.c_str())) {
           std::string groupconfigname =
             eos::common::GlobalConfig::gConfig.QueuePrefixName(
               gOFS->GroupConfigQueuePrefix.c_str(), groupname.c_str());
           retc = EIO;
-          stdErr = "error: cannot register group <";
-          stdErr += groupname.c_str();
-          stdErr += ">";
+          stdErr = "error: cannot register group <" + groupname.c_str() + ">";
         }
       }
 
