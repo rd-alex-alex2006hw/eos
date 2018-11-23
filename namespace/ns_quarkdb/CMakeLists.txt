@@ -64,6 +64,8 @@ set_target_properties(
   PROPERTIES
   POSITION_INDEPENDENT_CODE True)
 
+add_dependencies(EosNsQuarkdb-Objects EosProtobuf)
+
 #-------------------------------------------------------------------------------
 # EosNsQuarkdb library
 #-------------------------------------------------------------------------------

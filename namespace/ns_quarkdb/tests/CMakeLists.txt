@@ -28,7 +28,9 @@ include_directories(
 )
 
 #-------------------------------------------------------------------------------
-# ProtoBuf representation tests
+# QuarkDB namespace unit tests
+#
+# Note: These tests require a running QuarkDB instance
 #-------------------------------------------------------------------------------
 add_executable(
   eos-ns-quarkdb-tests
@@ -41,13 +43,13 @@ add_executable(
   NextInodeProviderTest.cc
   OtherTests.cc
   TestUtils.cc
-  VariousTests.cc
-)
+  VariousTests.cc)
 
 target_link_libraries(
   eos-ns-quarkdb-tests
   gtest
   gmock_main
+  eosCommon-Static
   EosNsQuarkdb-Static
   ${CMAKE_THREAD_LIBS_INIT})
 
