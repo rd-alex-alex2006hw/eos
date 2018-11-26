@@ -131,8 +131,9 @@ if (Linux)
 
   target_link_libraries(
     EosNsCommon-Static PUBLIC
-    EosProtobuf
-    ${Z_LIBRARY_STATIC} fmt)
+    fmt
+    EosProtobuf-Static
+    ${Z_LIBRARY_STATIC})
 
   set_target_properties(
     EosNsCommon-Static

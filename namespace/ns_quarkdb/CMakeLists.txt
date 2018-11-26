@@ -125,7 +125,7 @@ if (Linux)
   target_link_libraries(
     EosNsQuarkdb-Static
     EosNsCommon-Static
-    EosProtobuf
+    EosProtobuf-Static
     eosCommon-Static
     EosCrc32c-Static
     qclient
