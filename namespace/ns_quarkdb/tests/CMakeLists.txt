@@ -45,13 +45,18 @@ add_executable(
   TestUtils.cc
   VariousTests.cc)
 
+target_compile_options(
+  eos-ns-quarkdb-tests PRIVATE
+  -fsanitize=address)
+
 target_link_libraries(
   eos-ns-quarkdb-tests
   gtest
   gmock_main
   eosCommon-Static
   EosNsQuarkdb-Static
-  ${CMAKE_THREAD_LIBS_INIT})
+  ${CMAKE_THREAD_LIBS_INIT}
+  -fsanitize=address)
 
 install(
   TARGETS
@@ -67,7 +72,10 @@ target_compile_options(
   eosnsbench
   PUBLIC -DFILE_OFFSET_BITS=64)
 
-target_link_libraries(eosnsbench EosNsQuarkdb-Static eosCommon-Static)
+target_link_libraries(
+  eosnsbench
+  EosNsQuarkdb-Static
+  eosCommon-Static)
 
 install(
   TARGETS
