@@ -88,6 +88,7 @@ target_link_libraries(
   eos-unit-tests
   gtest_main
   gmock
+  eosCommon-Static
   XrdEosMgm-Static
   EosFstIo-Static
   ${READLINE_LIBRARY}
@@ -113,6 +114,7 @@ target_link_libraries(
   eos-fst-unit-tests
   gtest_main
   gmock
+  eosCommon-Static
   XrdEosFst-Static)
 
 install(TARGETS
