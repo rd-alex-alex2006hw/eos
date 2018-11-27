@@ -75,7 +75,7 @@ bool GroupHelper::ParseCommand(const char* arg)
   eos::common::StringTokenizer tokenizer(arg);
   tokenizer.GetLine();
 
-  if (!(subcommand = tokenizer.GetToken())) {
+  if (!(subcommand = tokenizer.GetToken().length())) {
     return false;  //if ( !(subcommand=tokenizer.GetToken(false).length()>0) )
   }
 
@@ -83,7 +83,7 @@ bool GroupHelper::ParseCommand(const char* arg)
   if (subcommand == "ls") {
     eos::console::GroupProto_LsProto* ls = group->mutable_ls();
 
-    if (!(option = tokenizer.GetToken())) {
+    if (!(option = tokenizer.GetToken().length())) {
       return true; // just "group ls" // #TOCK anything to do?
     } else {
       do {
