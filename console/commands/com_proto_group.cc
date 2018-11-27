@@ -70,64 +70,61 @@ bool GroupHelper::ParseCommand(const char* arg)
   bool ok = false; //
   bool sel = false; //
   //
-  std::string subcommand;
-  std::string option;
+  XrdOucString subcommand;
+  XrdOucString option;
   eos::common::StringTokenizer tokenizer(arg);
   tokenizer.GetLine();
 
-  if (!(subcommand = tokenizer.GetToken().length())) {
+  if (!(subcommand = tokenizer.GetToken()).length()) {
     return false;  //if ( !(subcommand=tokenizer.GetToken(false).length()>0) )
   }
 
   /* one of { ls, rm, set } */
   if (subcommand == "ls") {
     eos::console::GroupProto_LsProto* ls = group->mutable_ls();
+    option = tokenizer.GetToken();
 
-    if (!(option = tokenizer.GetToken().length())) {
-      return true; // just "group ls" // #TOCK anything to do?
-    } else {
-      do {
-        if (option == "-s") {
-          mIsSilent = true; //ls->set_silent(true);
-        } else if (option == "-g") {
-          std::string geodepth = subtokenizer.GetToken();
+    do {
+      if (option == "-s") {
+        mIsSilent = true; //ls->set_silent(true);
+      } else if (option == "-g") {
+        XrdOucString geodepth = tokenizer.GetToken();
 
-          if (!geodepth.length()) {
-            fprintf(stderr, "Error: geodepth is not provided\n");
-            return false;
-          }
-
-          if (!geodepth.isdigit() || geodepth.atoi() < 0) {
-            fprintf(stderr, "Error: geodepth should be a positive integer\n");
-            return false; //??? was return 0;
-          }
-
-          ls->set_outdepth(geodepth.atoi());
-        } else if (option == "-b" || option == "--brief") {
-          ls->set_outhost(true);
-          // } else if (option == "-m" || option == "-l" || option == "--io" || option == "--IO") {
-        } else if (option == "-m") {
-          ls->set_outformat(MONITORING);
-        } else if (option == "-l") {
-          ls->set_outformat(LONGER);
-        } else if (option == "--io") {
-          ls->set_outformat(IOGROUP);
-        } else if (option == "--IO") {
-          ls->set_outformat(IOFS);
-        } else if (!option.beginswith("-")) {
-          ls->set_selection(option);
-          //#TOCK
-          // if (!sel) {
-          //   ok = true;
-          // }
-          // sel = true;
+        if (!geodepth.length()) {
+          fprintf(stderr, "Error: geodepth is not provided\n");
+          return false;
         }
-      } while (option = tokenizer.GetToken());
 
-      return true;
-    }
+        if (!geodepth.isdigit() || geodepth.atoi() < 0) {
+          fprintf(stderr, "Error: geodepth should be a positive integer\n");
+          return false; //??? was return 0;
+        }
+
+        ls->set_outdepth(geodepth.atoi());
+      } else if (option == "-b" || option == "--brief") {
+        ls->set_outhost(true);
+        // } else if (option == "-m" || option == "-l" || option == "--io" || option == "--IO") {
+      } else if (option == "-m") {
+        ls->set_outformat(eos.console::GroupProto::MONITORING);
+      } else if (option == "-l") {
+        ls->set_outformat(eos.console::GroupProto::LONGER);
+      } else if (option == "--io") {
+        ls->set_outformat(eos.console::GroupProto::IOGROUP);
+      } else if (option == "--IO") {
+        ls->set_outformat(eos.console::GroupProto::IOFS);
+      } else if (!option.beginswith("-")) {
+        ls->set_selection(option);
+        //#TOCK
+        // if (!sel) {
+        //   ok = true;
+        // }
+        // sel = true;
+      }
+    } while ((option = tokenizer.GetToken()).length());
+
+    return true;
   } else if (subcommand == "rm") {
-    if (!(option = tokenizer.GetToken())) {
+    if (!(option = tokenizer.GetToken()).length()) {
       return false;
     } else {
       eos::console::GroupProto_RmProto* rm = group->mutable_rm();
@@ -136,13 +133,13 @@ bool GroupHelper::ParseCommand(const char* arg)
 
     return true;
   } else if (subcommand == "set") {
-    if (!(option = tokenizer.GetToken())) {
+    if (!(option = tokenizer.GetToken()).length()) {
       return false;
     } else {
       eos::console::GroupProto_SetProto* set = group->mutable_set();
       set->set_group(option);
 
-      if (!(option = tokenizer.GetToken())) {
+      if (!(option = tokenizer.GetToken()).length()) {
         return false;
       } else {
         if (option == "on") {

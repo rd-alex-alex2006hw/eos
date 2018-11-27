@@ -70,12 +70,12 @@ bool IoHelper::ParseCommand(const char* arg)
   bool ok = false; //
   bool sel = false; //
   //
-  std::string subcommand;
-  std::string option;
+  XrdOucString subcommand;
+  XrdOucString option;
   eos::common::StringTokenizer tokenizer(arg);
   tokenizer.GetLine();
 
-  if (!(subcommand = tokenizer.GetToken())) {
+  if (!(subcommand = tokenizer.GetToken()).length()) {
     return false;  //if ( !(subcommand=tokenizer.GetToken(false).length()>0) )
   }
 
@@ -102,7 +102,7 @@ bool IoHelper::ParseCommand(const char* arg)
       } else {
         return false;
       }
-    } while (option = tokenizer.GetToken());
+    } while (option = tokenizer.GetToken()).length();
 
     return true;
   } else if (subcommand == "ns") {
@@ -123,19 +123,19 @@ bool IoHelper::ParseCommand(const char* arg)
       } else if (option == "-a") { // #TOCK can it be included in Count?
         ns.set_all(true);
       } else if (option == "-100") { // #TODO group mutually exclusive options
-        ns.set_count(ONEHUNDRED);
+        ns.set_count(eos.console::IoProto::ONEHUNDRED);
       } else if (option == "-1000") {
-        ns.set_count(ONETHOUSAND);
+        ns.set_count(eos.console::IoProto::ONETHOUSAND);
       } else if (option == "-10000") {
-        ns.set_count(TENTHOUSAND);
+        ns.set_count(eos.console::IoProto::TENTHOUSAND);
       } else {
         return false;
       }
-    } while (option = tokenizer.GetToken());
+    } while (option = tokenizer.GetToken()).length();
 
     return true;
   } else if (subcommand == "report") {
-    if (!(option = tokenizer.GetToken())) {
+    if (!(option = tokenizer.GetToken()).length()) {
       return false;
     } else {
       eos::console::IoProto_ReportProto* report = io->mutable_report();
@@ -154,7 +154,7 @@ bool IoHelper::ParseCommand(const char* arg)
       } else if (option == "-n") {
         enable.set_namespace(true);
       } else if (option == "--udp") {
-        if (!(option = tokenizer.GetToken()) || (option.beginswith("-"))) {
+        if (!(option = tokenizer.GetToken()).length() || (option.beginswith("-"))) {
           return false;
         } else {
           enable->set_upd_address(option);
@@ -162,7 +162,7 @@ bool IoHelper::ParseCommand(const char* arg)
       } else {
         return false;
       }
-    } while (option = tokenizer.GetToken());
+    } while (option = tokenizer.GetToken()).length();
 
     return true;
   } else if (subcommand == "disable") { // #TODO merge with enable
@@ -177,7 +177,7 @@ bool IoHelper::ParseCommand(const char* arg)
       } else if (option == "-n") {
         disable.set_namespace(true);
       } else if (option == "--udp") {
-        if (!(option = tokenizer.GetToken()) || (option.beginswith("-"))) {
+        if (!(option = tokenizer.GetToken()).length() || (option.beginswith("-"))) {
           return false;
         } else {
           disable->set_upd_address(option);
@@ -185,7 +185,7 @@ bool IoHelper::ParseCommand(const char* arg)
       } else {
         return false;
       }
-    } while (option = tokenizer.GetToken());
+    } while (option = tokenizer.GetToken()).length();
 
     return true;
   } else { // no proper subcommand
