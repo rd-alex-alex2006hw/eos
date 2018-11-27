@@ -1,0 +1,58 @@
+syntax="proto3";
+package eos.console;
+
+message IoProto {
+
+  message StatProto {
+    bool details      = 1;
+    bool monitoring   = 2;
+    bool numerical    = 3;
+    bool top          = 4;
+    bool domain       = 5;
+    bool apps         = 6;
+    bool summary      = 7;
+  }
+
+  message EnableProto {
+    bool reports        = 1;
+    bool popularity     = 2;
+    bool namespace      = 3;
+    string upd_address  = 4;
+  }
+  // message EnableProto && DisableProto { works the same way #TODO merge them
+  message DisableProto {
+    bool reports        = 1;
+    bool popularity     = 2;
+    bool namespace      = 3;
+    string upd_address  = 4;
+  }
+
+  message ReportProto {
+    string path = 1;
+  }
+
+  message NsProto {
+    enum Count {
+      NONE          = 0;
+      ONEHUNDRED    = 1;
+      ONETHOUSAND   = 2;
+      TENTHOUSAND   = 3;
+    }
+    bool m                  = 1;
+    bool rank_by_byte     = 2; // #TOCK enum with by_access?
+    bool rank_by_access   = 3;
+    bool last_week        = 4;
+    bool hotfiles         = 5;
+    bool all              = 6;
+    Count count             = 7;
+  }
+
+  oneof subcmd {
+    StatProto stat      = 1;
+    EnableProto enable    = 2;
+    DisableProto disable = 3;
+    ReportProto report   = 4;
+    NsProto ns       = 5;
+  }
+
+}

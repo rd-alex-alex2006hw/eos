@@ -112,7 +112,8 @@ add_library(
   commands/com_proto_rm.cc
   commands/com_proto_ns.cc
   commands/com_proto_route.cc
-  commands/com_stagerrm.cc)
+  commands/com_stagerrm.cc
+  commands/com_proto_group.cc)
 
 add_dependencies(EosConsoleCommands-Objects EosFstProto-Objects)
 

@@ -27,19 +27,21 @@
 #include "console/ConsoleMain.hh"
 #include "console/commands/ICmdHelper.hh"
 
-extern int com_group(char *);
+//extern int com_group(char *); #TOCK
 
 void com_group_help();
 
 //------------------------------------------------------------------------------
 //! Class GroupHelper
 //------------------------------------------------------------------------------
-class GroupHelper : public ICmdHelper {
+class GroupHelper : public ICmdHelper
+{
 public:
   //----------------------------------------------------------------------------
   //! Constructor
   //----------------------------------------------------------------------------
-  GroupHelper() {
+  GroupHelper()
+  {
     mIsSilent = false;
     mHighlight = true;
   }
@@ -56,65 +58,62 @@ public:
   //!
   //! @return true if successful, otherwise false
   //----------------------------------------------------------------------------
-  bool ParseCommand(const char *arg) override;
+  bool ParseCommand(const char* arg) override;
 };
 
 
-bool GroupHelper::ParseCommand(const char *arg) {
-
+bool GroupHelper::ParseCommand(const char* arg)
+{
   eos::console::GroupProto* group = mReq.mutable_group();
-
   //
-  XrdOucEnv *result = 0; //
+  XrdOucEnv* result = 0; //
   bool ok = false; //
   bool sel = false; //
   //
-
   std::string subcommand;
   std::string option;
-
   eos::common::StringTokenizer tokenizer(arg);
   tokenizer.GetLine();
 
-
-  if (!(subcommand = tokenizer.GetToken())) return false; //if ( !(subcommand=tokenizer.GetToken(false).length()>0) )
-
+  if (!(subcommand = tokenizer.GetToken())) {
+    return false;  //if ( !(subcommand=tokenizer.GetToken(false).length()>0) )
+  }
 
   /* one of { ls, rm, set } */
   if (subcommand == "ls") {
-    
     eos::console::GroupProto_LsProto* ls = group->mutable_ls();
 
     if (!(option = tokenizer.GetToken())) {
-      return true; // just "group ls" // #TOCK anything to do? 
+      return true; // just "group ls" // #TOCK anything to do?
     } else {
-
       do {
-
         if (option == "-s") {
           mIsSilent = true; //ls->set_silent(true);
-
         } else if (option == "-g") {
-
           std::string geodepth = subtokenizer.GetToken();
 
           if (!geodepth.length()) {
             fprintf(stderr, "Error: geodepth is not provided\n");
             return false;
           }
+
           if (!geodepth.isdigit() || geodepth.atoi() < 0) {
             fprintf(stderr, "Error: geodepth should be a positive integer\n");
-            return false; //??? was return 0; 
+            return false; //??? was return 0;
           }
-          ls->set_outdepth(geodepth.atoi());
 
+          ls->set_outdepth(geodepth.atoi());
         } else if (option == "-b" || option == "--brief") {
           ls->set_outhost(true);
-
-        } else if (option == "-m" || option == "-l" || option == "--io" || option == "--IO") {
-          option.erase(std::remove(option.begin(), option.end(), '-'), option.end());
-          ls->set_outformat(option); 
-
+          // } else if (option == "-m" || option == "-l" || option == "--io" || option == "--IO") {
+        } else if (option == "-m") {
+          ls->set_outformat(MONITORING);
+        } else if (option == "-l") {
+          ls->set_outformat(LONGER);
+        } else if (option == "--io") {
+          ls->set_outformat(IOGROUP);
+        } else if (option == "--IO") {
+          ls->set_outformat(IOFS);
         } else if (!option.beginswith("-")) {
           ls->set_selection(option);
           //#TOCK
@@ -123,29 +122,26 @@ bool GroupHelper::ParseCommand(const char *arg) {
           // }
           // sel = true;
         }
-
       } while (option = tokenizer.GetToken());
 
       return true;
     }
-
   } else if (subcommand == "rm") {
-
     if (!(option = tokenizer.GetToken())) {
       return false;
     } else {
       eos::console::GroupProto_RmProto* rm = group->mutable_rm();
       rm->set_group(option);
     }
+
     return true;
-
   } else if (subcommand == "set") {
-
     if (!(option = tokenizer.GetToken())) {
       return false;
     } else {
       eos::console::GroupProto_SetProto* set = group->mutable_set();
       set->set_group(option);
+
       if (!(option = tokenizer.GetToken())) {
         return false;
       } else {
@@ -158,19 +154,19 @@ bool GroupHelper::ParseCommand(const char *arg) {
         }
       }
     }
-    return true;
 
+    return true;
   } else { // no proper subcommand
     return false;
   }
-
 }
 
 
 //------------------------------------------------------------------------------
 // Group command entry point
 //------------------------------------------------------------------------------
-int com_protogroup(char *arg) {
+int com_protogroup(char* arg)
+{
   if (wants_help(arg)) {
     com_group_help();
     global_retc = EINVAL;
@@ -189,14 +185,17 @@ int com_protogroup(char *arg) {
   return global_retc;
 }
 
-void com_group_help() {
+void com_group_help()
+{
   std::ostringstream oss;
   oss
-      << "usage: group ls [-s] [-g] [-b|--brief] [-m|-l|--io] [<groups>] : list groups" << std::endl
+      << "usage: group ls [-s] [-g] [-b|--brief] [-m|-l|--io] [<groups>] : list groups"
+      << std::endl
       << "\t<groups> : list <groups> only, where <groups> is a substring match and can be a comma seperated list"
       << std::endl
       << "\t  -s : silent mode" << std::endl
-      << "\t  -g : geo output - aggregate group information along the instance geotree down to <depth>" << std::endl
+      << "\t  -g : geo output - aggregate group information along the instance geotree down to <depth>"
+      << std::endl
       << "\t  -b : @@@" << std::endl
       << "\t  -m : monitoring key=value output format" << std::endl
       << "\t  -l : long output - list also file systems after each group" << std::endl
@@ -205,11 +204,11 @@ void com_group_help() {
       << std::endl
       << "usage: group rm <group-name> : remove group" << std::endl
       << std::endl
-      << "usage: group set <group-name> on|off : activate/deactivate group" << std::endl
+      << "usage: group set <group-name> on|off : activate/deactivate group" <<
+      std::endl
       << "\t=> when a group is (re-)enabled, the drain pull flag is recomputed for all filesystems within a group"
       << std::endl
       << "\t=> when a group is (re-)disabled, the drain pull flag is removed from all members in the group"
       << std::endl;
   std::cerr << oss.str() << std::endl;
-
 }
