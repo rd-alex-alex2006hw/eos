@@ -7,7 +7,7 @@ message GroupProto {
     enum OutFormat {
       NONE                  = 0; //
       MONITORING            = 1; // [-m]
-      LONG                  = 2; // [-l]
+      LONGER                = 2; // [-l]
       IOGROUP               = 3; // [--io]
       IOFS                  = 4; // [--IO]
     }

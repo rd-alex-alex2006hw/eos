@@ -123,11 +123,11 @@ bool IoHelper::ParseCommand(const char* arg)
       } else if (option == "-a") { // #TOCK can it be included in Count?
         ns.set_all(true);
       } else if (option == "-100") { // #TODO group mutually exclusive options
-        ns.set_count(eos.console::IoProto::ONEHUNDRED);
+        ns.set_count(eos::console::IoProto_NsProto::ONEHUNDRED);
       } else if (option == "-1000") {
-        ns.set_count(eos.console::IoProto::ONETHOUSAND);
+        ns.set_count(eos::console::IoProto_NsProto::ONETHOUSAND);
       } else if (option == "-10000") {
-        ns.set_count(eos.console::IoProto::TENTHOUSAND);
+        ns.set_count(eos::console::IoProto_NsProto::TENTHOUSAND);
       } else {
         return false;
       }

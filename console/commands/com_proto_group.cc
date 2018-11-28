@@ -65,17 +65,18 @@ public:
 bool GroupHelper::ParseCommand(const char* arg)
 {
   eos::console::GroupProto* group = mReq.mutable_group();
-  //
+  // #TOCK
   XrdOucEnv* result = 0; //
   bool ok = false; //
   bool sel = false; //
   //
-  XrdOucString subcommand;
-  XrdOucString option;
+  std::string subcommand;
+  std::string option;
   eos::common::StringTokenizer tokenizer(arg);
   tokenizer.GetLine();
+  std::string token;
 
-  if (!(subcommand = tokenizer.GetToken()).length()) {
+  if (!(token = tokenizer.GetToken()).length()) {
     return false;  //if ( !(subcommand=tokenizer.GetToken(false).length()>0) )
   }
 
@@ -105,14 +106,14 @@ bool GroupHelper::ParseCommand(const char* arg)
         ls->set_outhost(true);
         // } else if (option == "-m" || option == "-l" || option == "--io" || option == "--IO") {
       } else if (option == "-m") {
-        ls->set_outformat(eos.console::GroupProto::MONITORING);
+        ls->set_outformat(eos::console::GroupProto_LsProto::MONITORING);
       } else if (option == "-l") {
-        ls->set_outformat(eos.console::GroupProto::LONGER);
+        ls->set_outformat(eos::console::GroupProto_LsProto::LONGER);
       } else if (option == "--io") {
-        ls->set_outformat(eos.console::GroupProto::IOGROUP);
+        ls->set_outformat(eos::console::GroupProto_LsProto::IOGROUP);
       } else if (option == "--IO") {
-        ls->set_outformat(eos.console::GroupProto::IOFS);
-      } else if (!option.beginswith("-")) {
+        ls->set_outformat(eos::console::GroupProto_LsProto::IOFS);
+      } else if (!(option.find("-") == 0)) { // option begins with
         ls->set_selection(option);
         //#TOCK
         // if (!sel) {
