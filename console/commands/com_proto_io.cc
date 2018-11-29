@@ -10,7 +10,7 @@
  * This program is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by *
  * the Free Software Foundation, either version 3 of the License, or    *
- * (at your option) any later version.                                  *
+ * (at your token) any later version.                                  *
  *                                                                      *
  * This program is distributed in the hope that it will be useful,      *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of       *
@@ -65,132 +65,115 @@ public:
 bool IoHelper::ParseCommand(const char* arg)
 {
   eos::console::IoProto* io = mReq.mutable_io();
-  //
-  XrdOucEnv* result = 0; //
-  bool ok = false; //
-  bool sel = false; //
-  //
-  XrdOucString subcommand;
-  XrdOucString option;
   eos::common::StringTokenizer tokenizer(arg);
   tokenizer.GetLine();
+  XrdOucString token;
 
-  if (!(subcommand = tokenizer.GetToken()).length()) {
-    return false;  //if ( !(subcommand=tokenizer.GetToken(false).length()>0) )
+  if (!next_token(tokenizer, token)) {
+    return false;
   }
 
   /* one of { stat, ns, report, enable, disable } */
-  if (subcommand == "stat") {
+  if (token == "stat") {
     eos::console::IoProto_StatProto* stat = io->mutable_stat();
-    option = tokenizer.GetToken()
 
-    do {
-      if (option == "-a") {
+    while (next_token(tokenizer, token)) {
+      if (token == "-a") {
         stat.set_details(true);
-      } else if (option == "-m") {
+      } else if (token == "-m") {
         stat.set_monitoring(true);
-      } else if (option == "-n") {
+      } else if (token == "-n") {
         stat.set_numerical(true);
-      } else if (option == "-t") {
+      } else if (token == "-t") {
         stat.set_top(true);
-      } else if (option == "-d") {
+      } else if (token == "-d") {
         stat.set_domain(true);
-      } else if (option == "-x") {
+      } else if (token == "-x") {
         stat.set_apps(true);
-      } else if (option == "-l") {
+      } else if (token == "-l") {
         stat.set_summary(true);
       } else {
         return false;
       }
-    } while (option = tokenizer.GetToken()).length();
-
-    return true;
-  } else if (subcommand == "ns") {
+    }
+  } else if (token == "ns") {
     eos::console::IoProto_NsProto* ns = io->mutable_ns();
-    option = tokenizer.GetToken()
 
-    do {
-      if (option == "-m") {
+    while (next_token(tokenizer, token)) {
+      if (token == "-m") {
         ns.set_details(true);
-      } else if (option == "-b") {
+      } else if (token == "-b") {
         ns.set_rank_by_byte(true);
-      } else if (option == "-n") {
+      } else if (token == "-n") {
         ns.set_rank_by_access(true);
-      } else if (option == "-w") {
+      } else if (token == "-w") {
         ns.set_last_week(true);
-      } else if (option == "-f") {
+      } else if (token == "-f") {
         ns.set_hotfiles(true);
-      } else if (option == "-a") { // #TOCK can it be included in Count?
+      } else if (token == "-a") { // #TOCK can it be included in Count?
         ns.set_all(true);
-      } else if (option == "-100") { // #TODO group mutually exclusive options
+      } else if (token == "-100") { // #TODO group mutually exclusive tokens
         ns.set_count(eos::console::IoProto_NsProto::ONEHUNDRED);
-      } else if (option == "-1000") {
+      } else if (token == "-1000") {
         ns.set_count(eos::console::IoProto_NsProto::ONETHOUSAND);
-      } else if (option == "-10000") {
+      } else if (token == "-10000") {
         ns.set_count(eos::console::IoProto_NsProto::TENTHOUSAND);
       } else {
         return false;
       }
-    } while (option = tokenizer.GetToken()).length();
-
-    return true;
-  } else if (subcommand == "report") {
-    if (!(option = tokenizer.GetToken()).length()) {
-      return false;
-    } else {
-      eos::console::IoProto_ReportProto* report = io->mutable_report();
-      report->set_path(option);
-      return true;
     }
-  } else if (subcommand == "enable") {
+  } else if (token == "report") {
+    if (!next_token(tokenizer, token)) {
+      return false;
+    }
+
+    eos::console::IoProto_ReportProto* report = io->mutable_report();
+    report->set_path(token.c_str());
+  } else if (token == "enable") {
     eos::console::IoProto_EnableProto* enable = io->mutable_enable();
-    option = tokenizer.GetToken()
 
-    do { // r p n -udp
-      if (option == "-r") {
+    while (next_token(tokenizer, token)) {
+      if (token == "-r") {
         enable.set_reports(true);
-      } else if (option == "-p") {
+      } else if (token == "-p") {
         enable.set_popularity(true);
-      } else if (option == "-n") {
+      } else if (token == "-n") {
         enable.set_namespace(true);
-      } else if (option == "--udp") {
-        if (!(option = tokenizer.GetToken()).length() || (option.beginswith("-"))) {
+      } else if (token == "--udp") {
+        if (!(next_token(tokenizer, token)) || (token.beginswith("-"))) {
           return false;
         } else {
-          enable->set_upd_address(option);
+          enable->set_upd_address(token.c_str());
         }
       } else {
         return false;
       }
-    } while (option = tokenizer.GetToken()).length();
-
-    return true;
-  } else if (subcommand == "disable") { // #TODO merge with enable
+    }
+  } else if (token == "disable") { // #TODO merge with enable
     eos::console::IoProto_DisableProto* disable = io->mutable_enable();
-    option = tokenizer.GetToken()
 
-    do { // r p n -udp
-      if (option == "-r") {
+    while (next_token(tokenizer, token)) {
+      if (token == "-r") {
         disable.set_reports(true);
-      } else if (option == "-p") {
+      } else if (token == "-p") {
         disable.set_popularity(true);
-      } else if (option == "-n") {
+      } else if (token == "-n") {
         disable.set_namespace(true);
-      } else if (option == "--udp") {
-        if (!(option = tokenizer.GetToken()).length() || (option.beginswith("-"))) {
+      } else if (token == "--udp") {
+        if (!next_token(tokenizer, token) || (token.beginswith("-"))) {
           return false;
         } else {
-          disable->set_upd_address(option);
+          disable->set_upd_address(token.c_str());
         }
       } else {
         return false;
       }
-    } while (option = tokenizer.GetToken()).length();
-
-    return true;
+    }
   } else { // no proper subcommand
     return false;
   }
+
+  return true;
 }
 
 

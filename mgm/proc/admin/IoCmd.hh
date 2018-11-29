@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//! @file ICmdHelper.hh
+//! @file IoCmd.hh
 //------------------------------------------------------------------------------
 
 /************************************************************************
@@ -21,82 +21,67 @@
  ************************************************************************/
 
 #pragma once
-#include "proto/ConsoleRequest.pb.h"
-#include "console/MgmExecute.hh"
-#include "common/StringTokenizer.hh"
+#include "mgm/Namespace.hh"
+#include "proto/Io.pb.h"
+#include "mgm/proc/ProcCommand.hh"
+#include "namespace/interface/IContainerMD.hh"
+#include <list>
+
+EOSMGMNAMESPACE_BEGIN
 
 //------------------------------------------------------------------------------
-//! Class ICmdHelper
-//! @brief Abstract base class to be inherited in all the command
-//! implementations
+//! Class IoCmd - class handling io commands
 //------------------------------------------------------------------------------
-class ICmdHelper
+class IoCmd: public IProcCommand
 {
 public:
   //----------------------------------------------------------------------------
   //! Constructor
+  //!
+  //! @param req client ProtocolBuffer request
+  //! @param vid client virtual identity
   //----------------------------------------------------------------------------
-  ICmdHelper():
-    mReq(), mMgmExec(), mIsAdmin(false), mHighlight(false), mIsSilent(false)
-  {
-    if (json) {
-      mReq.set_format(eos::console::RequestProto::JSON);
-    }
-
-    if (global_comment.length()) {
-      mReq.set_comment(global_comment.c_str());
-      global_comment = "";
-    }
-  }
+  explicit IoCmd(eos::console::RequestProto&& req,
+                 eos::common::Mapping::VirtualIdentity& vid):
+    IProcCommand(std::move(req), vid, false)
+  {}
 
   //----------------------------------------------------------------------------
   //! Destructor
   //----------------------------------------------------------------------------
-  virtual ~ICmdHelper() = default;
+  virtual ~IoCmd() = default;
 
   //----------------------------------------------------------------------------
-  //! Parse command line input
+  //! Method implementing the specific behaviour of the command executed by the
+  //! asynchronous thread
+  //----------------------------------------------------------------------------
+  eos::console::ReplyProto ProcessRequest() override;
+
+private:
+
+
+  //----------------------------------------------------------------------------
+  //! Execute ls command
   //!
-  //! @param arg input
+  //! @param ls ls subcommand proto object
   //!
-  //! @return true if successful, otherwise false
+  //! @return string representing ls output
   //----------------------------------------------------------------------------
-  virtual bool ParseCommand(const char* arg) = 0;
+  std::string LsSubcmd(const eos::console::GroupProto_LsProto& ls);
 
   //----------------------------------------------------------------------------
-  //! Execute command and display any output information
-  //! @note When this methods is called the generic request object mReq needs
-  //! to already contain the specific commands object.
+  //! Execute ls command
   //!
-  //! @return command return code
+  //! @param ls ls subcommand proto object
+  //! @param reply reply proto object
   //----------------------------------------------------------------------------
-  int Execute(bool printError = true);
 
-  int ExecuteWithoutPrint();
-
-  std::string GetResult();
-
-  std::string GetError();
-
-  bool NeedsConfirmation();
-
-  bool ConfirmOperation();
-
-  bool next_token(eos::common::StringTokenizer& tokenizer, XrdOucString& token);
+  void LsSubcmd(const eos::console::GroupProto_LsProto& ls,
+                eos::console::ReplyProto& reply);
 
 
-protected:
-  //----------------------------------------------------------------------------
-  //! Apply highlighting to text
-  //!
-  //! @param text text to be highlighted
-  //----------------------------------------------------------------------------
-  void TextHighlight(std::string& text);
-
-  eos::console::RequestProto mReq; ///< Generic request object send to the MGM
-  MgmExecute mMgmExec; ///< Wrapper for executing commands at the MGM
-  bool mIsAdmin; ///< If true execute as admin, otherwise as user
-  bool mHighlight; ///< If true apply text highlighting to output
-  bool mIsSilent; ///< If true execute command but don't display anything
-  bool mNeedsConfirmation {false}; ///< If true it requires a strong user confirmation before executing the command
 };
+
+
+
+EOSMGMNAMESPACE_END

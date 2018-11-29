@@ -25,12 +25,12 @@
 #include "proto/Group.pb.h"
 #include "mgm/proc/ProcCommand.hh"
 #include "namespace/interface/IContainerMD.hh"
-#include <list>
+//#include <list>
 
 EOSMGMNAMESPACE_BEGIN
 
 //------------------------------------------------------------------------------
-//! Class NsCmd - class handling ns commands
+//! Class GroupCmd - class handling group commands
 //------------------------------------------------------------------------------
 class GroupCmd: public IProcCommand
 {

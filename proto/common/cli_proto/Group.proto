@@ -16,7 +16,6 @@ message GroupProto {
     bool outhost          = 2; // [-b]
     OutFormat outformat   = 3; // 
     string selection      = 4; // [<groups>]
-    // bool silent = 5;
   }
 
   message RmProto {

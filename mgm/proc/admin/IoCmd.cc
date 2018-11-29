@@ -81,7 +81,6 @@ GroupCmd::ProcessRequest()
 // Execute ls subcommand
 //------------------------------------------------------------------------------
 int
-
 GroupCmd::LsSubcmd(const eos::console::GroupProto_LsProto& ls,
                    eos::console::ReplyProto& reply)
 {
@@ -89,25 +88,37 @@ GroupCmd::LsSubcmd(const eos::console::GroupProto_LsProto& ls,
   std::string format;
   std::string mListFormat;
   std::string fqdn;
-  format = FsView::GetGroupFormat(ls.outformat());
 
   switch (ls.outformat()) {
-  case eos::console::GroupProto_LsProto::LONGER:
-    mListFormat = FsView::GetFileSystemFormat(ls.outformat());
-    break;
+  case MONITORING:
+    mOutFormat = "m"
+                 break;
 
-  case eos::console::GroupProto_LsProto::IOFS:
-    mListFormat = FsView::GetFileSystemFormat("io");
-    ls.set_outformat(eos::console::GroupProto_LsProto::IOGROUP);
-    break;
+  case LONG:
+    mOutFormat = "l"
+                 break;
 
-  case eos::console::GroupProto_LsProto::MONITORING:
-  case eos::console::GroupProto_LsProto::IOGROUP:
-    // #TOCK anything?
-    break;
+  case IOGROUP:
+    mOutFormat = "io"
+                 break;
+
+  case IOFS:
+    mOutFormat = "IO"
+                 break;
 
   default :
     //
+  }
+
+  format = FsView::GetGroupFormat(std::string(mOutFormat.c_str()));
+
+  if ((mOutFormat == "l")) {
+    mListFormat = FsView::GetFileSystemFormat(std::string(mOutFormat.c_str()));
+  }
+
+  if ((mOutFormat == "IO")) {
+    mListFormat = FsView::GetFileSystemFormat(std::string("io"));
+    mOutFormat = "io";
   }
 
   // if -b || --brief
@@ -143,8 +154,8 @@ GroupCmd::RmSubcmd(const eos::console::GroupProto_RmProto& rm,
                    eos::console::ReplyProto& reply)
 {
   if (pVid->uid == 0) {
-    std::string groupname = (rm.group().length() ? std::to_string(
-                               rm.group()) : "");   // #TOCK is this mess needed or is using rm.group() enough?
+    std::string groupname = (std::to_string(rm.group().length()) ? std::to_string(
+                               rm.group()) : "");   // #TOCK is this variable needed or is rm.group() enough?
 
     if ((!groupname.length())) {
       stdErr = "error: illegal parameters";

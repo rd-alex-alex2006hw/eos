@@ -10,7 +10,7 @@
  * This program is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by *
  * the Free Software Foundation, either version 3 of the License, or    *
- * (at your option) any later version.                                  *
+ * (at your token) any later version.                                  *
  *                                                                      *
  * This program is distributed in the hope that it will be useful,      *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of       *
@@ -45,7 +45,6 @@ public:
     mIsSilent = false;
     mHighlight = true;
   }
-
   //----------------------------------------------------------------------------
   //! Destructor
   //----------------------------------------------------------------------------
@@ -59,104 +58,84 @@ public:
   //! @return true if successful, otherwise false
   //----------------------------------------------------------------------------
   bool ParseCommand(const char* arg) override;
+
 };
 
 
 bool GroupHelper::ParseCommand(const char* arg)
 {
   eos::console::GroupProto* group = mReq.mutable_group();
-  // #TOCK
-  XrdOucEnv* result = 0; //
-  bool ok = false; //
-  bool sel = false; //
-  //
-  std::string subcommand;
-  std::string option;
   eos::common::StringTokenizer tokenizer(arg);
   tokenizer.GetLine();
-  std::string token;
+  XrdOucString token;
 
-  if (!(token = tokenizer.GetToken()).length()) {
-    return false;  //if ( !(subcommand=tokenizer.GetToken(false).length()>0) )
+  if (!next_token(tokenizer, token)) {
+    return false;
   }
 
   /* one of { ls, rm, set } */
-  if (subcommand == "ls") {
+  if (token == "ls") {
     eos::console::GroupProto_LsProto* ls = group->mutable_ls();
-    option = tokenizer.GetToken();
 
-    do {
-      if (option == "-s") {
-        mIsSilent = true; //ls->set_silent(true);
-      } else if (option == "-g") {
-        XrdOucString geodepth = tokenizer.GetToken();
-
-        if (!geodepth.length()) {
-          fprintf(stderr, "Error: geodepth is not provided\n");
+    while (next_token(tokenizer, token)) {
+      if (token == "-s") {
+        mIsSilent = true;
+      } else if (token == "-g") {
+        if (!next_token(tokenizer, token) || !token.isdigit() || token.atoi() < 0) {
+          fprintf(stderr,
+                  "Error: geodepth was not provided or it does not have the correct value: geodepth should be a positive integer\n");
           return false;
         }
 
-        if (!geodepth.isdigit() || geodepth.atoi() < 0) {
-          fprintf(stderr, "Error: geodepth should be a positive integer\n");
-          return false; //??? was return 0;
-        }
-
-        ls->set_outdepth(geodepth.atoi());
-      } else if (option == "-b" || option == "--brief") {
+        ls->set_outdepth(token.atoi());
+      } else if (token == "-b" || token == "--brief") {
         ls->set_outhost(true);
-        // } else if (option == "-m" || option == "-l" || option == "--io" || option == "--IO") {
-      } else if (option == "-m") {
+        // } else if (token == "-m" || token == "-l" || token == "--io" || token == "--IO") {
+      } else if (token == "-m") {
         ls->set_outformat(eos::console::GroupProto_LsProto::MONITORING);
-      } else if (option == "-l") {
+      } else if (token == "-l") {
         ls->set_outformat(eos::console::GroupProto_LsProto::LONGER);
-      } else if (option == "--io") {
+      } else if (token == "--io") {
         ls->set_outformat(eos::console::GroupProto_LsProto::IOGROUP);
-      } else if (option == "--IO") {
+      } else if (token == "--IO") {
         ls->set_outformat(eos::console::GroupProto_LsProto::IOFS);
-      } else if (!(option.find("-") == 0)) { // option begins with
-        ls->set_selection(option);
-        //#TOCK
-        // if (!sel) {
-        //   ok = true;
-        // }
-        // sel = true;
-      }
-    } while ((option = tokenizer.GetToken()).length());
-
-    return true;
-  } else if (subcommand == "rm") {
-    if (!(option = tokenizer.GetToken()).length()) {
-      return false;
-    } else {
-      eos::console::GroupProto_RmProto* rm = group->mutable_rm();
-      rm->set_group(option);
-    }
-
-    return true;
-  } else if (subcommand == "set") {
-    if (!(option = tokenizer.GetToken()).length()) {
-      return false;
-    } else {
-      eos::console::GroupProto_SetProto* set = group->mutable_set();
-      set->set_group(option);
-
-      if (!(option = tokenizer.GetToken()).length()) {
-        return false;
+      } else if (!(token.beginswith("-"))) {
+        ls->set_selection(token.c_str());
       } else {
-        if (option == "on") {
-          set->set_group_state(true);
-        } else if (option == "off") {
-          set->set_group_state(false);
-        } else {
-          return false;
-        }
+        return false;
       }
     }
+  } else if (token == "rm") {
+    if (!next_token(tokenizer, token)) {
+      return false;
+    }
 
-    return true;
+    eos::console::GroupProto_RmProto* rm = group->mutable_rm();
+    rm->set_group(token.c_str());
+  } else if (token == "set") {
+    if (!next_token(tokenizer, token)) {
+      return false;
+    }
+
+    eos::console::GroupProto_SetProto* set = group->mutable_set();
+    set->set_group(token.c_str());
+
+    if (!(next_token(tokenizer, token))) {
+      return false;
+    } else {
+      if (token == "on") {
+        set->set_group_state(true);
+      } else if (token == "off") {
+        set->set_group_state(false);
+      } else {
+        return false;
+      }
+    }
   } else { // no proper subcommand
     return false;
   }
+
+  return true;
 }
 
 
@@ -194,7 +173,7 @@ void com_group_help()
       << "\t  -s : silent mode" << std::endl
       << "\t  -g : geo output - aggregate group information along the instance geotree down to <depth>"
       << std::endl
-      << "\t  -b : @@@" << std::endl
+      << "\t  -b : " << std::endl
       << "\t  -m : monitoring key=value output format" << std::endl
       << "\t  -l : long output - list also file systems after each group" << std::endl
       << "\t--io : print IO statistics for the group" << std::endl
